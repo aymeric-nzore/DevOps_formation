@@ -1,0 +1,24 @@
+name: CI/CD pipeline
+
+on:
+  push:
+    branches: ["main"]
+jobs:
+  test-build-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Recup le code
+        uses: actions/checkout@v3
+
+      - name : installer node
+        uses : actions/setup-node@v3
+        with:   
+            node-version: 20
+
+      - name : installer les dépendances
+        run : npm install
+        working-directory : backend
+
+      - name : build docker image
+        run : docker build -t myapp ./backend
