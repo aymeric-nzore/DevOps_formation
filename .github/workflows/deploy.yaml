@@ -18,7 +18,7 @@ jobs:
 
       - name: installer les dépendances
         run: npm install
-        working-directory: backend
+        working-directory: proj4
 
       - name: build docker image
         run: docker build -t myapp ./backend
