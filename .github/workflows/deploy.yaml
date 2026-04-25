@@ -1,32 +1,33 @@
-name: CI/CD pipeline
+name: CI pipeline
 
 on:
-  push:
-    branches: ["main"]
+    push:
+        branches: [ "proj6" ]
 jobs:
-  test-build-deploy:
-    runs-on: ubuntu-latest
+    test-build:
+        runs-on: ubuntu-latest
 
-    steps:
-      - name: Recup le code
-        uses: actions/checkout@v3
+        steps:
+            - name: Recup le code
+              uses: actions/checkout@v3
+ 
+            - name: installer node
+              uses: actions/setup-node@v3
+              with:
+                  node-version: 20
 
-      - name: installer node
-        uses: actions/setup-node@v3
-        with:
-          node-version: 20
+            - name: installer les dépendances
+              run: npm install
+              working-directory: .
 
-      - name: installer les dépendances
-        run: npm install
-        working-directory: .
+            - name: build docker
+              run: docker build -t proj6
 
-      - name: build docker image
-        run: docker build -t myapp .
-
-      - name: login dockerhub
-        run: echo "${{secrets.DOCKER_PASSWORD}}" | docker login -u "${{secrets.DOCKER_USERNAME}}" --password-stdin
-
-      - name: Push image
-        run: |
-          docker tag myapp ${{ secrets.DOCKER_USERNAME }}/myapp:latest
-          docker push ${{ secrets.DOCKER_USERNAME }}/myapp:latest
+            - name: connexion docker hub
+              run: echo "${{secrets.DOCKER_PASSWORD}}" | docker login -u
+                  "${{secrets.DOCKER_USERNAME}}" --password-stdin
+            
+            - name : push image
+              run : | 
+                docker tag myapp ${{ secrets.DOCKER_USERNAME }}/proj6:latest
+                docker push ${{ secrets.DOCKER_USERNAME }}/proj6:latest

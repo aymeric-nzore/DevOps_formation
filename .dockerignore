@@ -1,4 +1,9 @@
 node_modules
+<<<<<<< HEAD
 *.log
 .env
 .git
+=======
+.env
+*.log
+>>>>>>> 2695b14 (1st commit)

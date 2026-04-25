@@ -1,11 +1,21 @@
 {
+<<<<<<< HEAD
   "name": "proj4",
   "version": "1.0.0",
   "description": "",
+=======
+  "name": "proj6",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "aymeric_nzore",
+  "type": "module",
+>>>>>>> 2695b14 (1st commit)
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+<<<<<<< HEAD
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -15,5 +25,11 @@
     "express": "^5.2.1",
     "ioredis": "^5.10.1",
     "mongoose": "^9.5.0"
+=======
+  "dependencies": {
+    "express": "^5.2.1",
+    "pg": "^8.20.0",
+    "redis": "^5.12.1"
+>>>>>>> 2695b14 (1st commit)
   }
 }

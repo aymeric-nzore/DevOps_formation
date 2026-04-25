@@ -1,86 +1,77 @@
 import express from "express";
-import mongoose from "mongoose";
-import dotenv from "dotenv";
-import os from "os";
-import Redis from "ioredis";
-dotenv.config();
+import { createClient } from "redis";
+import { Client } from "pg";
 const app = express();
 app.use(express.json());
 
-//redis
-const redis = new Redis({
-  host: "redis",
-  port: 6379,
+//connexion redis
+const redis = createClient({
+  url: process.env.REDIS_URL,
+});
+async function connectRedis() {
+  try {
+    await redis.connect();
+    console.log("Redis connected ✅");
+  } catch (err) {
+    console.log("Redis not ready, retrying... 🔁");
+    setTimeout(connectRedis, 3000);
+  }
+}
+
+connectRedis();
+
+//postgres
+const db = new Client({
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
 });
 async function connectDB() {
   try {
-    await mongoose.connect(process.env.MONGO_URI, {
-      serverSelectionTimeoutMS: 5000,
-    });
-    console.log("Mongo connected");
+    await db.connect();
+    console.log("Postgres connected ✅");
   } catch (err) {
-    console.log("Mongo error, retry...");
-    setTimeout(connectDB, 5000);
+    console.log("Postgres not ready, retrying... 🔁");
+    setTimeout(connectDB, 3000);
   }
 }
+
 connectDB();
-
-// MODEL
-const User = mongoose.model("User", {
-  name: String,
-});
-//Circuit breaker
-let isOpen = false;
-let failureCount = 0;
-// routes
+// test
 app.get("/", (req, res) => {
-  res.send(`Hello from ${HOST}`);
+  res.send("API OK 🚀");
 });
 
-app.get("/health", (req, res) => {
-  if (mongoose.connection.readyState === 1) {
-    res.status(200).send("OK");
-  } else {
-    res.status(500).send("DB DOWN");
+//route avec cache
+app.get("/users", async (req, res) => {
+  const cached = await redis.get("users");
+
+  if (cached) {
+    console.log("CACHE HIT");
+    return res.json(JSON.parse(cached));
   }
+
+  console.log("CACHE MISS");
+
+  const result = await db.query("SELECT * FROM users");
+
+  await redis.setEx("users", 10, JSON.stringify(result.rows));
+
+  res.json(result.rows);
 });
 
-app.post("/user", async (req, res) => {
-  if (isOpen) {
-    return res.status(503).json({
-      error: "Service temporairement indisponible",
-    });
-  }
-  try {
-    const cached = await redis.get("users");
-    if (cached) {
-      console.log("CACHE present");
-      return res.json(JSON.parse(cached));
-    }
-    console.log("cache absent");
-    const users = await User.find();
+//ajout user
+app.post("/users", async (req, res) => {
+  const { name } = req.body;
 
-    await redis.set("users", JSON.stringify(users), "EX", 10);
-    res.json(users);
-  } catch (e) {
-    failureCount++;
+  await db.query("INSERT INTO users(name) VALUES($1)", [name]);
 
-    if (failureCount >= 3) {
-      circuitOpen = true;
+  await redis.del("users");
 
-      console.log("Circuit OPEN");
-
-      setTimeout(() => {
-        circuitOpen = false;
-        failureCount = 0;
-        console.log("Circuit RESET");
-      }, 10000);
-    }
-
-    res.status(503).json({ error: "DB error" });
-  }
+  res.send("User ajouté");
 });
 
-app.listen(process.env.PORT, () => {
-  console.log(`Server running on ${process.env.PORT}`);
+app.listen(3000, () => {
+  console.log("Server running");
 });
