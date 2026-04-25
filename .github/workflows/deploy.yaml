@@ -21,7 +21,7 @@ jobs:
               working-directory: .
 
             - name: build docker
-              run: docker build -t proj6
+              run: docker build -t proj6 .
 
             - name: connexion docker hub
               run: echo "${{secrets.DOCKER_PASSWORD}}" | docker login -u
@@ -29,5 +29,5 @@ jobs:
             
             - name : push image
               run : | 
-                docker tag myapp ${{ secrets.DOCKER_USERNAME }}/proj6:latest
+                docker tag proj6 ${{ secrets.DOCKER_USERNAME }}/proj6:latest
                 docker push ${{ secrets.DOCKER_USERNAME }}/proj6:latest
